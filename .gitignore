@@ -2,7 +2,12 @@
 dist/
 
 # Unit test / coverage reports
+.coverage
 
 # Environments
 py312/
+.vscode/
+
+# Cache
+__pycache__/
 

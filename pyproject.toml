@@ -23,3 +23,9 @@ classifiers = [
 [project.urls]
 Homepage = "https://github.com/scottbelden/agdiff"
 Issues = "https://github.com/scottbelden/agdiff/issues"
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-cov",
+]

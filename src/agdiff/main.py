@@ -52,6 +52,7 @@ def _split_lines(lines: list[str], start_index: int = 0):
         raise ValueError("Invalid choice")
 
 
+@app.command()
 def main(input_path_str: str):
     input_path = Path(input_path_str)
     if input_path.is_file():
@@ -62,7 +63,11 @@ def main(input_path_str: str):
         sha1.update(contents.encode())
         print(input_path_str)
         print(sha1.hexdigest())
-        action = Prompt.ask(escape("What action should be taken? Continue [c], Split file [s]"))
+        print("")
+        print("-----")
+        print(escape("Continue [c]"))
+        print(escape("Split file [s]"))
+        action = Prompt.ask()
         if action == "c":
             typer.Exit()
         elif action == "s":
