@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agdiff"
+version = "0.0.1"
+authors = [
+    { name="Scott Belden", email="scottabelden@gmail.com" },
+]
+description = "A tool for doing diffs over an air gap"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "typer[all]",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/scottbelden/agdiff"
+Issues = "https://github.com/scottbelden/agdiff/issues"
