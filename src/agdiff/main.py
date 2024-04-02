@@ -1,12 +1,23 @@
+from dataclasses import dataclass
 import hashlib
 from math import floor
 from pathlib import Path
 
 from rich import print
+from rich.markup import escape
 from rich.panel import Panel
 from rich.prompt import Prompt
-from rich.markup import escape
+from rich.tree import Tree
 import typer
+
+
+@dataclass
+class _PathAndHash:
+    path: str
+    sha1_hash: str = ""
+
+    def __rich__(self):
+        return f"{self.path} ({self.sha1_hash})"
 
 
 app = typer.Typer()
@@ -52,17 +63,25 @@ def _split_lines(lines: list[str], start_index: int = 0):
         raise ValueError("Invalid choice")
 
 
+def _get_file_hash(file_path: Path) -> str | None:
+    sha1 = hashlib.sha1()
+    with file_path.open("r") as fp:
+        try:
+            contents = fp.read()
+        except UnicodeDecodeError:
+            return None
+
+    sha1.update(contents.encode())
+    return sha1.hexdigest()
+
+
 @app.command()
 def main(input_path_str: str):
     input_path = Path(input_path_str)
     if input_path.is_file():
-        sha1 = hashlib.sha1()
-        with input_path.open("r") as fp:
-            contents = fp.read()
-
-        sha1.update(contents.encode())
+        file_hash = _get_file_hash(input_path)
         print(input_path_str)
-        print(sha1.hexdigest())
+        print(file_hash)
         print("")
         print("-----")
         print(escape("Continue [c]"))
@@ -74,6 +93,31 @@ def main(input_path_str: str):
             with input_path.open("r") as fp:
                 lines = fp.readlines()
             _split_lines(lines)
+    elif input_path.is_dir():
+        folder_hashes: dict[Path, str] = {}
+        root_directory = _PathAndHash(str(input_path))
+        tree = Tree(root_directory)
+        for root, dirs, files in input_path.walk(top_down=False):
+            sha1 = hashlib.sha1()
+            for dir in sorted(dirs):
+                sha1.update(folder_hashes[root / dir].encode())
+                if input_path == root:
+                    tree.add(_PathAndHash(dir, folder_hashes[root / dir]))
+            for file in sorted(files):
+                file_hash = _get_file_hash(root / file)
+                if file_hash:
+                    sha1.update(file_hash.encode())
+                    if input_path == root:
+                        tree.add(_PathAndHash(file, file_hash))
+                else:
+                    if input_path == root:
+                        tree.add(_PathAndHash(file, "Binary"))
+
+            folder_hash = sha1.hexdigest()
+            folder_hashes[root] = folder_hash
+            root_directory.sha1_hash = folder_hash
+        print(tree)
+
     else:
         raise ValueError("Unsupported path type")
 
