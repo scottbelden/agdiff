@@ -3,6 +3,7 @@ from math import floor
 from pathlib import Path
 
 from rich import print
+from rich.panel import Panel
 from rich.prompt import Prompt
 from rich.markup import escape
 import typer
@@ -14,7 +15,7 @@ app = typer.Typer()
 def _split_lines(lines: list[str], start_index: int = 0):
     if len(lines) == 1:
         print("Line contents:")
-        print(lines[0])
+        print(Panel(lines[0]))
         return
 
     halfway = floor(len(lines) / 2)
@@ -23,19 +24,20 @@ def _split_lines(lines: list[str], start_index: int = 0):
     first_half_str = "".join(first_half_lines)
     sha1 = hashlib.sha1()
     sha1.update(first_half_str.encode())
-    print(f"Lines: {1 + start_index} - {halfway + start_index}")
-    print(sha1.hexdigest())
-    print("")
+    print(Panel(f"Lines: {1 + start_index} - {halfway + start_index}\n" + f"{sha1.hexdigest()}"))
 
     second_half_lines = lines[halfway:]
     second_half_str = "".join(second_half_lines)
     sha1 = hashlib.sha1()
     sha1.update(second_half_str.encode())
-    print(f"Lines: {halfway + 1 + start_index} - {len(lines) + start_index}")
-    print(sha1.hexdigest())
-    print("")
+    print(
+        Panel(
+            f"Lines: {halfway + 1 + start_index} - {len(lines) + start_index}\n"
+            + f"{sha1.hexdigest()}"
+        )
+    )
 
-    print("What action should be taken?")
+    print("-----")
     print(escape("Split top [t]"))
     print(escape("Split bottom [b]"))
     print(escape("Return to previous chunks [r]"))
