@@ -35,32 +35,51 @@ def _split_lines(lines: list[str], start_index: int = 0):
     first_half_str = "".join(first_half_lines)
     sha1 = hashlib.sha1()
     sha1.update(first_half_str.encode())
-    print(Panel(f"Lines: {1 + start_index} - {halfway + start_index}\n" + f"{sha1.hexdigest()}"))
+    top_hash = sha1.hexdigest()
 
     second_half_lines = lines[halfway:]
     second_half_str = "".join(second_half_lines)
     sha1 = hashlib.sha1()
     sha1.update(second_half_str.encode())
-    print(
-        Panel(
-            f"Lines: {halfway + 1 + start_index} - {len(lines) + start_index}\n"
-            + f"{sha1.hexdigest()}"
-        )
-    )
+    bottom_hash = sha1.hexdigest()
 
-    print("-----")
-    print(escape("Split top [t]"))
-    print(escape("Split bottom [b]"))
-    print(escape("Return to previous chunks [r]"))
-    action = Prompt.ask()
-    if action == "t":
-        _split_lines(first_half_lines, start_index=start_index)
-    elif action == "b":
-        _split_lines(second_half_lines, start_index=halfway + start_index)
-    elif action == "r":
-        pass
-    else:
-        raise ValueError("Invalid choice")
+    traversed_top = False
+    traversed_bottom = False
+    while True:
+        top_style = "bold"
+        bottom_style = "bold"
+        if traversed_top:
+            top_style = "none"
+        if traversed_bottom:
+            bottom_style = "none"
+
+        print(
+            Panel(
+                f"Lines: {1 + start_index} - {halfway + start_index}\n" + top_hash,
+                style=top_style,
+            )
+        )
+        print(
+            Panel(
+                f"Lines: {halfway + 1 + start_index} - {len(lines) + start_index}\n" + bottom_hash,
+                style=bottom_style,
+            )
+        )
+        print("-----")
+        print(escape("Split top [t]"))
+        print(escape("Split bottom [b]"))
+        print(escape("Return to previous chunks [r]"))
+        action = Prompt.ask()
+        if action == "t":
+            _split_lines(first_half_lines, start_index=start_index)
+            traversed_top = True
+        elif action == "b":
+            _split_lines(second_half_lines, start_index=halfway + start_index)
+            traversed_bottom = True
+        elif action == "r":
+            return
+        else:
+            raise ValueError("Invalid choice")
 
 
 def _get_file_hash(file_path: Path) -> str | None:
