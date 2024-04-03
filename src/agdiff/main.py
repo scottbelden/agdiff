@@ -20,6 +20,7 @@ class _PathAndHash:
     is_dir: bool
     count: int = 0
     sha1_hash: str = ""
+    can_traverse: bool = True
     traversed: bool = False
 
     def __rich__(self):
@@ -34,7 +35,9 @@ class _PathAndHash:
             formatted_count = ""
 
         style = ""
-        if not self.traversed:
+        if not self.can_traverse:
+            style = "strike"
+        elif not self.traversed:
             style = "bold"
 
         return Text(f"{formatted_count}{icon} {self.path} ({self.sha1_hash})", style=style)
@@ -84,7 +87,11 @@ def _traverse_directory(input_path: Path):
             else:
                 if input_path == root:
                     sub_file = _PathAndHash(
-                        file, count=len(all_paths), is_dir=False, sha1_hash="Binary"
+                        file,
+                        count=len(all_paths),
+                        is_dir=False,
+                        sha1_hash="Binary",
+                        can_traverse=False,
                     )
                     tree.add(sub_file)
                     all_paths.append((root / file, sub_file))
@@ -98,7 +105,15 @@ def _traverse_directory(input_path: Path):
         print("")
         print("-----")
         end = len(all_paths) - 1
-        answer = Prompt.ask(f"Which file or directory to step into? [1 - {end}]")
+        answer = Prompt.ask(
+            escape(
+                f"Which file or directory to step into? [1 - {end}] Or press [p] to go up one directory"
+            )
+        )
+
+        if answer == "p":
+            return
+
         error_message = f"Must choose a value between 1 and {end}"
         try:
             answer_as_int = int(answer)
@@ -108,8 +123,9 @@ def _traverse_directory(input_path: Path):
         if answer_as_int < 1 or answer_as_int > end:
             raise ValueError(error_message)
 
-        _traverse(all_paths[answer_as_int][0])
-        all_paths[answer_as_int][1].traversed = True
+        if all_paths[answer_as_int][1].can_traverse:
+            _traverse(all_paths[answer_as_int][0])
+            all_paths[answer_as_int][1].traversed = True
 
 
 def _traverse(input_path: Path):
