@@ -57,55 +57,59 @@ def _traverse_directory(input_path: Path):
     folder_hashes: dict[Path, str] = {}
     root_directory = _PathAndHash(str(input_path), is_dir=True, traversed=True)
     tree = Tree(root_directory)
-    all_paths = [input_path]
+    all_paths = [(input_path, root_directory)]
     for root, dirs, files in input_path.walk(top_down=False):
         sha1 = hashlib.sha1()
         for dir in sorted(dirs):
             sha1.update(folder_hashes[root / dir].encode())
             if input_path == root:
-                tree.add(
-                    _PathAndHash(
-                        dir,
-                        count=len(all_paths),
-                        is_dir=True,
-                        sha1_hash=folder_hashes[root / dir],
-                    )
+                sub_directory = _PathAndHash(
+                    dir,
+                    count=len(all_paths),
+                    is_dir=True,
+                    sha1_hash=folder_hashes[root / dir],
                 )
-                all_paths.append(root / dir)
+                tree.add(sub_directory)
+                all_paths.append((root / dir, sub_directory))
         for file in sorted(files):
             file_hash = _get_file_hash(root / file)
             if file_hash:
                 sha1.update(file_hash.encode())
                 if input_path == root:
-                    tree.add(
-                        _PathAndHash(file, count=len(all_paths), is_dir=False, sha1_hash=file_hash)
+                    sub_file = _PathAndHash(
+                        file, count=len(all_paths), is_dir=False, sha1_hash=file_hash
                     )
-                    all_paths.append(root / file)
+                    tree.add(sub_file)
+                    all_paths.append((root / file, sub_file))
             else:
                 if input_path == root:
-                    tree.add(
-                        _PathAndHash(file, count=len(all_paths), is_dir=False, sha1_hash="Binary")
+                    sub_file = _PathAndHash(
+                        file, count=len(all_paths), is_dir=False, sha1_hash="Binary"
                     )
-                    all_paths.append(root / file)
+                    tree.add(sub_file)
+                    all_paths.append((root / file, sub_file))
 
         folder_hash = sha1.hexdigest()
         folder_hashes[root] = folder_hash
         root_directory.sha1_hash = folder_hash
-    print(tree)
-    print("")
-    print("-----")
-    end = len(all_paths) - 1
-    answer = Prompt.ask(f"Which file or directory to step into? [1 - {end}]")
-    error_message = f"Must choose a value between 1 and {end}"
-    try:
-        answer_as_int = int(answer)
-    except ValueError:
-        raise ValueError(error_message)
 
-    if answer_as_int < 1 or answer_as_int > end:
-        raise ValueError(error_message)
+    while True:
+        print(tree)
+        print("")
+        print("-----")
+        end = len(all_paths) - 1
+        answer = Prompt.ask(f"Which file or directory to step into? [1 - {end}]")
+        error_message = f"Must choose a value between 1 and {end}"
+        try:
+            answer_as_int = int(answer)
+        except ValueError:
+            raise ValueError(error_message)
 
-    _traverse(all_paths[answer_as_int])
+        if answer_as_int < 1 or answer_as_int > end:
+            raise ValueError(error_message)
+
+        _traverse(all_paths[answer_as_int][0])
+        all_paths[answer_as_int][1].traversed = True
 
 
 def _traverse(input_path: Path):
