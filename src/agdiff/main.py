@@ -9,6 +9,7 @@ from rich.console import Group
 from rich.markup import escape
 from rich.panel import Panel
 from rich.prompt import Prompt
+from rich.text import Text
 from rich.tree import Tree
 import typer
 
@@ -17,14 +18,26 @@ import typer
 class _PathAndHash:
     path: str
     is_dir: bool
+    count: int = 0
     sha1_hash: str = ""
+    traversed: bool = False
 
     def __rich__(self):
         if self.is_dir:
             icon = "📁"
         else:
             icon = "📄"
-        return f"{icon} {self.path} ({self.sha1_hash})"
+
+        if self.count:
+            formatted_count = f"({self.count}) "
+        else:
+            formatted_count = ""
+
+        style = ""
+        if not self.traversed:
+            style = "bold"
+
+        return Text(f"{formatted_count}{icon} {self.path} ({self.sha1_hash})", style=style)
 
 
 _PREVIOUS = "PREVIOUS"
@@ -34,7 +47,77 @@ _QUIT = "QUIT"
 app = typer.Typer()
 
 
-def _split_lines(
+def _traverse_file(input_path: Path):
+    with input_path.open("r") as fp:
+        lines = fp.readlines()
+    _split_file(str(input_path), lines)
+
+
+def _traverse_directory(input_path: Path):
+    folder_hashes: dict[Path, str] = {}
+    root_directory = _PathAndHash(str(input_path), is_dir=True, traversed=True)
+    tree = Tree(root_directory)
+    all_paths = [input_path]
+    for root, dirs, files in input_path.walk(top_down=False):
+        sha1 = hashlib.sha1()
+        for dir in sorted(dirs):
+            sha1.update(folder_hashes[root / dir].encode())
+            if input_path == root:
+                tree.add(
+                    _PathAndHash(
+                        dir,
+                        count=len(all_paths),
+                        is_dir=True,
+                        sha1_hash=folder_hashes[root / dir],
+                    )
+                )
+                all_paths.append(root / dir)
+        for file in sorted(files):
+            file_hash = _get_file_hash(root / file)
+            if file_hash:
+                sha1.update(file_hash.encode())
+                if input_path == root:
+                    tree.add(
+                        _PathAndHash(file, count=len(all_paths), is_dir=False, sha1_hash=file_hash)
+                    )
+                    all_paths.append(root / file)
+            else:
+                if input_path == root:
+                    tree.add(
+                        _PathAndHash(file, count=len(all_paths), is_dir=False, sha1_hash="Binary")
+                    )
+                    all_paths.append(root / file)
+
+        folder_hash = sha1.hexdigest()
+        folder_hashes[root] = folder_hash
+        root_directory.sha1_hash = folder_hash
+    print(tree)
+    print("")
+    print("-----")
+    end = len(all_paths) - 1
+    answer = Prompt.ask(f"Which file or directory to step into? [1 - {end}]")
+    error_message = f"Must choose a value between 1 and {end}"
+    try:
+        answer_as_int = int(answer)
+    except ValueError:
+        raise ValueError(error_message)
+
+    if answer_as_int < 1 or answer_as_int > end:
+        raise ValueError(error_message)
+
+    _traverse(all_paths[answer_as_int])
+
+
+def _traverse(input_path: Path):
+    if input_path.is_file():
+        _traverse_file(input_path)
+    elif input_path.is_dir():
+        _traverse_directory(input_path)
+    else:
+        raise ValueError("Unsupported path type")
+
+
+def _split_file(
     filename: str, lines: list[str], start_index: int = 0
 ) -> Literal["PREVIOUS"] | Literal["QUIT"]:
     if len(lines) == 1:
@@ -96,10 +179,10 @@ def _split_lines(
         print(escape("Exit file [q]"))
         action = Prompt.ask()
         if action == "t":
-            return_value = _split_lines(filename, first_half_lines, start_index=start_index)
+            return_value = _split_file(filename, first_half_lines, start_index=start_index)
             traversed_top = True
         elif action == "b":
-            return_value = _split_lines(
+            return_value = _split_file(
                 filename, second_half_lines, start_index=halfway + start_index
             )
             traversed_bottom = True
@@ -129,37 +212,7 @@ def _get_file_hash(file_path: Path) -> str | None:
 @app.command()
 def main(input_path_str: str):
     input_path = Path(input_path_str)
-    if input_path.is_file():
-        with input_path.open("r") as fp:
-            lines = fp.readlines()
-        _split_lines(str(input_path), lines)
-    elif input_path.is_dir():
-        folder_hashes: dict[Path, str] = {}
-        root_directory = _PathAndHash(str(input_path), is_dir=True)
-        tree = Tree(root_directory)
-        for root, dirs, files in input_path.walk(top_down=False):
-            sha1 = hashlib.sha1()
-            for dir in sorted(dirs):
-                sha1.update(folder_hashes[root / dir].encode())
-                if input_path == root:
-                    tree.add(_PathAndHash(dir, is_dir=True, sha1_hash=folder_hashes[root / dir]))
-            for file in sorted(files):
-                file_hash = _get_file_hash(root / file)
-                if file_hash:
-                    sha1.update(file_hash.encode())
-                    if input_path == root:
-                        tree.add(_PathAndHash(file, is_dir=False, sha1_hash=file_hash))
-                else:
-                    if input_path == root:
-                        tree.add(_PathAndHash(file, is_dir=False, sha1_hash="Binary"))
-
-            folder_hash = sha1.hexdigest()
-            folder_hashes[root] = folder_hash
-            root_directory.sha1_hash = folder_hash
-        print(tree)
-
-    else:
-        raise ValueError("Unsupported path type")
+    _traverse(input_path)
 
 
 if __name__ == "__main__":
