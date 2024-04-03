@@ -13,6 +13,11 @@ from rich.text import Text
 from rich.tree import Tree
 import typer
 
+_PREVIOUS = "PREVIOUS"
+_QUIT = "QUIT"
+
+app = typer.Typer()
+
 
 @dataclass
 class _PathAndHash:
@@ -41,13 +46,6 @@ class _PathAndHash:
             style = "bold"
 
         return Text(f"{formatted_count}{icon} {self.path} ({self.sha1_hash})", style=style)
-
-
-_PREVIOUS = "PREVIOUS"
-_QUIT = "QUIT"
-
-
-app = typer.Typer()
 
 
 def _traverse_file(input_path: Path):
@@ -140,6 +138,11 @@ def _traverse(input_path: Path):
 def _split_file(
     filename: str, lines: list[str], start_index: int = 0
 ) -> Literal["PREVIOUS"] | Literal["QUIT"]:
+    if len(lines) == 0:
+        print("Empty file")
+        print("")
+        return _QUIT
+
     if len(lines) == 1:
         print("Line contents:")
         print(Panel(lines[0]))
