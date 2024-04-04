@@ -27,8 +27,6 @@ jobs:
         with:
           python-version: ${{ matrix.py }}
       - uses: actions/checkout@v4.1.1
-      - name: Install Testing Dependencies
-        run: pip install -r developer_requirements.txt
       - name: Run Tests
         run: ./run_tests.sh
 
