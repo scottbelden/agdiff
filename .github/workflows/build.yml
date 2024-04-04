@@ -40,15 +40,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4.1.2
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.17.0
-        env:
-          CIBW_BUILD: "*${{ matrix.py }}*"
+        run: python3 -m build
       - name: Archive all wheels
         uses: actions/upload-artifact@v4.3.1
         with:
-          name: linux-wheels-${{ matrix.py }}
+          name: wheel
           path: |
-            ./wheelhouse/*.whl
+            ./dist/*.whl
           if-no-files-found: error
 
   release:
@@ -71,7 +69,7 @@ jobs:
       - name: Download distributions
         uses: actions/download-artifact@v4.1.4
         with:
-          pattern: linux-wheels-*
+          pattern: wheel
           merge-multiple: true
           path: dist
       - name: Upload binaries to release
@@ -79,7 +77,7 @@ jobs:
         if: ${{ github.event_name == 'create' && github.event.ref_type == 'tag' }}
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ./dist/*linux*.whl
+          file: ./dist/*.whl
           tag: ${{ github.ref }}
           overwrite: true
           file_glob: true

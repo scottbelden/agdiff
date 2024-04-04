@@ -30,6 +30,7 @@ test = [
     "pyright",
     "pytest",
     "pytest-cov",
+    "build",
 ]
 
 [tool.pyright]
