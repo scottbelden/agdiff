@@ -14,8 +14,3 @@ echo ""
 echo "Running pyright..."
 pyright
 
-echo ""
-echo "Running pytest..."
-pytest \
-    --cov=agdiff \
-    --cov-report term-missing

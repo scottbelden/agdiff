@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import hashlib
+import os
 from math import floor
 from pathlib import Path
 from typing import Literal
@@ -61,31 +62,33 @@ def _traverse_directory(input_path: Path):
     root_directory = _PathAndHash(str(input_path), is_dir=True, traversed=True)
     tree = Tree(root_directory)
     all_paths = [(input_path, root_directory)]
-    for root, dirs, files in input_path.walk(top_down=False):
+    # In Python 3.12 we can use input_path.walk() and get rid of `root_path`
+    for root, dirs, files in os.walk(input_path, topdown=False):
+        root_path = Path(root)
         sha1 = hashlib.sha1()
         for dir in sorted(dirs):
-            sha1.update(folder_hashes[root / dir].encode())
-            if input_path == root:
+            sha1.update(folder_hashes[root_path / dir].encode())
+            if input_path == root_path:
                 sub_directory = _PathAndHash(
                     dir,
                     count=len(all_paths),
                     is_dir=True,
-                    sha1_hash=folder_hashes[root / dir],
+                    sha1_hash=folder_hashes[root_path / dir],
                 )
                 tree.add(sub_directory)
-                all_paths.append((root / dir, sub_directory))
+                all_paths.append((root_path / dir, sub_directory))
         for file in sorted(files):
-            file_hash = _get_file_hash(root / file)
+            file_hash = _get_file_hash(root_path / file)
             if file_hash:
                 sha1.update(file_hash.encode())
-                if input_path == root:
+                if input_path == root_path:
                     sub_file = _PathAndHash(
                         file, count=len(all_paths), is_dir=False, sha1_hash=file_hash
                     )
                     tree.add(sub_file)
-                    all_paths.append((root / file, sub_file))
+                    all_paths.append((root_path / file, sub_file))
             else:
-                if input_path == root:
+                if input_path == root_path:
                     sub_file = _PathAndHash(
                         file,
                         count=len(all_paths),
@@ -94,10 +97,10 @@ def _traverse_directory(input_path: Path):
                         can_traverse=False,
                     )
                     tree.add(sub_file)
-                    all_paths.append((root / file, sub_file))
+                    all_paths.append((root_path / file, sub_file))
 
         folder_hash = sha1.hexdigest()
-        folder_hashes[root] = folder_hash
+        folder_hashes[root_path] = folder_hash
         root_directory.sha1_hash = folder_hash
 
     while True:

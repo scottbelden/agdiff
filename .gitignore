@@ -5,7 +5,7 @@ dist/
 .coverage
 
 # Environments
-py312/
+py3*/
 .vscode/
 
 # Cache
