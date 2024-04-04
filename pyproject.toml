@@ -34,3 +34,7 @@ test = [
 
 [tool.pyright]
 typeCheckingMode = "strict"
+include = ["src"]
+executionEnvironments = [
+  { root = "src" }
+]
