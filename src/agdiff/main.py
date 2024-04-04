@@ -45,7 +45,9 @@ class _PathAndHash:
         elif not self.traversed:
             style = "bold"
 
-        return Text(f"{formatted_count}{icon} {self.path} ({self.sha1_hash})", style=style)
+        return Text(
+            f"{formatted_count}{icon} {self.path} ({self.sha1_hash})", style=style
+        )
 
 
 def _traverse_file(input_path: Path):
@@ -189,7 +191,8 @@ def _split_file(
                 style=top_style,
             ),
             Panel(
-                f"Lines: {halfway + 1 + start_index} - {len(lines) + start_index}\n" + bottom_hash,
+                f"Lines: {halfway + 1 + start_index} - {len(lines) + start_index}\n"
+                + bottom_hash,
                 style=bottom_style,
             ),
         )
@@ -202,7 +205,9 @@ def _split_file(
         print(escape("Exit file [q]"))
         action = Prompt.ask()
         if action == "t":
-            return_value = _split_file(filename, first_half_lines, start_index=start_index)
+            return_value = _split_file(
+                filename, first_half_lines, start_index=start_index
+            )
             traversed_top = True
         elif action == "b":
             return_value = _split_file(

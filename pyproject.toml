@@ -26,6 +26,11 @@ Issues = "https://github.com/scottbelden/agdiff/issues"
 
 [project.optional-dependencies]
 test = [
+    "ruff",
+    "pyright",
     "pytest",
     "pytest-cov",
 ]
+
+[tool.pyright]
+typeCheckingMode = "strict"
