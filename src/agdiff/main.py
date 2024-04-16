@@ -246,5 +246,9 @@ def main(input_path_str: str):
     _traverse(input_path)
 
 
-if __name__ == "__main__":
+def _main():
     typer.run(main)
+
+
+if __name__ == "__main__":
+    _main()

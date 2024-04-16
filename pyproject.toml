@@ -33,6 +33,9 @@ test = [
     "build",
 ]
 
+[project.scripts]
+agdiff = "agdiff.main:_main"
+
 [tool.pyright]
 typeCheckingMode = "strict"
 include = ["src"]
