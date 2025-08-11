@@ -24,7 +24,7 @@ jobs:
         uses: actions/setup-python@v5.6.0
         with:
           python-version: ${{ matrix.py }}
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v4.3.0
       - name: Run Tests
         run: ./run_tests.sh
 
@@ -38,7 +38,7 @@ jobs:
           - 312
     steps:
       - name: Checkout
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v4.3.0
       - name: Build wheels
         run: |
           pip install build
