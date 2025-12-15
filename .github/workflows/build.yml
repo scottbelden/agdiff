@@ -44,7 +44,7 @@ jobs:
           pip install build
           python3 -m build
       - name: Archive all wheels
-        uses: actions/upload-artifact@v5.0.0
+        uses: actions/upload-artifact@v6.0.0
         with:
           name: wheel
           path: |
