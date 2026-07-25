@@ -10,7 +10,7 @@ authors = [
 ]
 description = "A tool for doing diffs over an air gap"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 dependencies = [
     "typer[all]",
 ]
