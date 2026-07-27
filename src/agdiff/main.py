@@ -1,10 +1,11 @@
-from dataclasses import dataclass
 import hashlib
 import os
+from dataclasses import dataclass
 from math import floor
 from pathlib import Path
 from typing import Literal
 
+import typer
 from rich import print
 from rich.console import Group
 from rich.markup import escape
@@ -12,7 +13,6 @@ from rich.panel import Panel
 from rich.prompt import Prompt
 from rich.text import Text
 from rich.tree import Tree
-import typer
 
 _PREVIOUS = "PREVIOUS"
 _QUIT = "QUIT"
@@ -142,7 +142,7 @@ def _traverse(input_path: Path):
 
 def _split_file(
     filename: str, lines: list[str], start_index: int = 0
-) -> Literal["PREVIOUS"] | Literal["QUIT"]:
+) -> Literal["PREVIOUS", "QUIT"]:
     if len(lines) == 0:
         print("Empty file")
         print("")
